@@ -683,7 +683,18 @@ class No_Li_Con(Node, ViNodes):
                                                                                                                                                  int(self.spectrummenu),
                                                                                                                                                  ('', '-C')[self.colour])
 
+                with open(self.inputs['Location in'].links[0].from_node.weather, "r") as epwfile:
+                    epwlines = epwfile.readlines()
+
+                start_idx = (self.sdoy - 1) * 24 + self.shour + 8 - 1
+                # end_idx = (self.edoy - 1) * 24 + self.shour + self.startframe + 8 + 1
+                old_skytype_params = self['skytypeparams']
+
                 for f, frame in enumerate(range(self.startframe, self['endframe'] + 1)):
+                    self['skytypeparams'] = "-W {} {} -O {} {}".format(epwlines[int(start_idx + f)].split(",")[14],
+                                                                       epwlines[int(start_idx + f)].split(",")[15],
+                                                                       int(self.spectrummenu),
+                                                                       ('', '-C')[self.colour])
                     skytext = livi_sun(scene, self, f) + livi_sky(self['skynum']) + livi_ground(*self.gcol, self.gref)
 
                     if self['skynum'] < 2 or (self.skyprog == '1' and self.epsilon > 1):
@@ -699,7 +710,7 @@ class No_Li_Con(Node, ViNodes):
                         hdrexport(scene, f, frame, self, skytext)
 
                     self['Text'][str(frame)] = skytext
-
+                self['skytypeparams'] = old_skytype_params
             elif self.skyprog == '2':
                 hdr_loc = bpy.path.abspath(self.hdrname)
                 if self.hdrname and os.path.isfile(hdr_loc):
